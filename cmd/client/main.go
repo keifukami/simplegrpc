@@ -16,10 +16,6 @@ import (
 	"time"
 )
 
-const (
-	serverAddress = "localhost:50051"
-)
-
 type config struct {
 	ServerAddress string
 	EnableTLS     bool
@@ -149,9 +145,9 @@ func main() {
 	}
 
 	var conn *grpc.ClientConn
-	conn, err = grpc.Dial(serverAddress, opts...)
+	conn, err = grpc.Dial(cfg.ServerAddress, opts...)
 	if err != nil {
-		fmt.Printf("failed to dial: %s\n", serverAddress)
+		fmt.Printf("failed to dial: %s\n", cfg.ServerAddress)
 		panic(err)
 	}
 	defer (func(c *grpc.ClientConn) {
