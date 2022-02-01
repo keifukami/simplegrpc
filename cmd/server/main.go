@@ -16,7 +16,7 @@ func main() {
 	fmt.Println("prepare server...")
 
 	var listener net.Listener
-	listener, err = net.Listen("tcp", "localhost:50051")
+	listener, err = net.Listen("tcp", "0.0.0.0:50051")
 	if err != nil {
 		panic(err)
 	}
