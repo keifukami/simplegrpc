@@ -163,28 +163,28 @@ func main() {
 	fmt.Println("call proto.Echo/OneEcho")
 	err = callOneEcho(echoClient, "myname", "yourname", "Hello, World!")
 	if err != nil {
-		fmt.Printf("OneEcho failed: %#v\n", err)
+		fmt.Printf("OneEcho failed: %#v, %s\n", err, err)
 	}
 
 	fmt.Println("-----")
 	fmt.Println("call proto.Echo/MultiEcho")
 	err = callMultiEcho(echoClient, "myname", "yourname", "Hello, World!", 4, 2)
 	if err != nil {
-		fmt.Printf("MultiEcho failed: %#v\n", err)
+		fmt.Printf("MultiEcho failed: %#v, %s\n", err, err)
 	}
 
 	fmt.Println("-----")
 	fmt.Println("call proto.Calculator/Add")
 	err = callAdd(calcClient, []int32{10, 5, 200})
 	if err != nil {
-		fmt.Printf("Add failed: %#v\n", err)
+		fmt.Printf("Add failed: %#v, %s\n", err, err)
 	}
 
 	fmt.Println("-----")
 	fmt.Println("call proto.Calculator/AddInteractive")
 	err = callAddInteractive(calcClient, []int32{10, 5, 200})
 	if err != nil {
-		fmt.Printf("AddInteractive failed: %#v\n", err)
+		fmt.Printf("AddInteractive failed: %#v, %s\n", err, err)
 	}
 
 }
