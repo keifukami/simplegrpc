@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "github.com/keifukami/simplegrpc/proto";
+
+package proto;
+
+service Echo {
+  rpc OneEcho(Message) returns (Message);
+  rpc MultiEcho(MultiEchoRequest) returns (stream Message);
+}
+
+message Message {
+  string SourceName = 1;
+  string DestinationName = 2;
+  string Body = 3;
+  optional uint32 Count = 4;
+}
+
+message MultiEchoRequest {
+  Message Message = 1;
+  optional uint32 Repeats = 2;
+  optional uint32 DelayInSeconds = 3;
+}
+
+service Calculator {
+  rpc Add(stream Value) returns (Value);
+  rpc AddInteractive(stream Value) returns (stream Value);
+}
+
+message Value {
+  sint32 Number = 1;
+}
