@@ -2,11 +2,17 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	pb "github.com/keifukami/simplegrpc/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
+	"io/ioutil"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -14,12 +20,132 @@ const (
 	serverAddress = "localhost:50051"
 )
 
+type config struct {
+	ServerAddress string
+	EnableTLS     bool
+	TLS           *tlsOption
+}
+
+func (c *config) LoadFromEnv() {
+
+	serverAddress := os.Getenv("SIMPLEGRPC_SERVER_ADDRESS")
+	if serverAddress == "" {
+		serverAddress = "localhost:50051"
+	}
+	c.ServerAddress = serverAddress
+
+	enableTLS := os.Getenv("SIMPLEGRPC_ENABLE_TLS")
+	c.EnableTLS = enableTLS == "true"
+
+	if c.EnableTLS {
+		t := &tlsOption{}
+		if t.LoadFromEnv() {
+			c.TLS = t
+		}
+	}
+
+}
+
+func (c *config) Credential() grpc.DialOption {
+
+	var err error
+
+	if !c.EnableTLS {
+		return grpc.WithTransportCredentials(insecure.NewCredentials())
+	}
+
+	serverName := strings.Split(c.ServerAddress, ":")[0]
+
+	cfg := &tls.Config{
+		ServerName: serverName,
+	}
+
+	if c.TLS != nil {
+
+		var ca []byte
+		ca, err = ioutil.ReadFile(c.TLS.CACertPath)
+		if err != nil {
+			panic(fmt.Errorf("failed to read CA certificate from %s: %#v", c.TLS.CACertPath, err))
+		}
+
+		certPool := x509.NewCertPool()
+		if ok := certPool.AppendCertsFromPEM(ca); !ok {
+			panic(fmt.Errorf("failed to append CA certificate to pool: %#v", err))
+		}
+
+		var certs []tls.Certificate
+		if c.TLS.Client != nil {
+			var clientCerts tls.Certificate
+			clientCerts, err = tls.LoadX509KeyPair(c.TLS.Client.CertPath, c.TLS.Client.KeyPath)
+			if err != nil {
+				panic(fmt.Errorf("failed to load Client cert or key: cert: %s, key: %s: %#v", c.TLS.Client.CertPath, c.TLS.Client.KeyPath, err))
+			}
+			certs = append(certs, clientCerts)
+		}
+
+		cfg.RootCAs = certPool
+		cfg.Certificates = certs
+
+	}
+
+	return grpc.WithTransportCredentials(credentials.NewTLS(cfg))
+
+}
+
+type tlsOption struct {
+	CACertPath string
+	Client     *clientCert
+}
+
+func (t *tlsOption) LoadFromEnv() bool {
+
+	caCertPath := os.Getenv("SIMPLEGRPC_TLS_CA_CERT_PATH")
+	if caCertPath != "" {
+
+		t.CACertPath = caCertPath
+
+		c := &clientCert{}
+		if c.LoadFromEnv() {
+			t.Client = c
+		}
+
+		return true
+
+	}
+
+	return false
+
+}
+
+type clientCert struct {
+	CertPath string
+	KeyPath  string
+}
+
+func (c *clientCert) LoadFromEnv() bool {
+
+	certPath := os.Getenv("SIMPLEGRPC_TLS_CLIENT_CERT_PATH")
+	keyPath := os.Getenv("SIMPLEGRPC_TLS_CLIENT_KEY_PATH")
+
+	if certPath != "" && keyPath != "" {
+		c.CertPath = certPath
+		c.KeyPath = keyPath
+		return true
+	}
+
+	return false
+
+}
+
 func main() {
 
 	var err error
 
+	cfg := &config{}
+	cfg.LoadFromEnv()
+
 	var opts = []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		cfg.Credential(),
 	}
 
 	var conn *grpc.ClientConn
