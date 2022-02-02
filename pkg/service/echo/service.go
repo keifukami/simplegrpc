@@ -35,7 +35,7 @@ func (es *echoServer) MultiEcho(echoRequest *pb.MultiEchoRequest, stream pb.Echo
 	var err error
 
 	var headers metadata.MD
-	headers, _ = metadata.FromOutgoingContext(stream.Context())
+	headers, _ = metadata.FromIncomingContext(stream.Context())
 	logSessionInfo("proto.Echo/MultiEcho", headers)
 
 	var repeats uint32 = 3

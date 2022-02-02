@@ -21,7 +21,7 @@ func (cs *calculatorServer) Add(stream pb.Calculator_AddServer) error {
 	var err error
 
 	var headers metadata.MD
-	headers, _ = metadata.FromOutgoingContext(stream.Context())
+	headers, _ = metadata.FromIncomingContext(stream.Context())
 	logSessionInfo("proto.Calculator/Add", headers)
 
 	var sum int32 = 0
@@ -57,7 +57,7 @@ func (cs *calculatorServer) AddInteractive(stream pb.Calculator_AddInteractiveSe
 	var err error
 
 	var headers metadata.MD
-	headers, _ = metadata.FromOutgoingContext(stream.Context())
+	headers, _ = metadata.FromIncomingContext(stream.Context())
 	logSessionInfo("proto.Calculator/AddInteractive", headers)
 
 	var sum int32 = 0
