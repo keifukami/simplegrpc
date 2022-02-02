@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"io"
 	"io/ioutil"
 	"os"
@@ -189,9 +190,22 @@ func main() {
 
 }
 
+func logSessionInfo(header, trailer metadata.MD) {
+	fmt.Println("[DEBUG]   headers:")
+	for name, values := range header {
+		fmt.Printf("[DEBUG]     name: %s, values: %s.\n", name, strings.Join(values, "; "))
+	}
+	fmt.Println("[DEBUG]   trailers:")
+	for name, values := range trailer {
+		fmt.Printf("[DEBUG]     name: %s, values: %s.\n", name, strings.Join(values, "; "))
+	}
+}
+
 func callOneEcho(client pb.EchoClient, myName string, yourName string, message string) error {
 
 	var err error
+
+	fmt.Println("[DEBUG] call proto.Echo/OneEcho")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -203,10 +217,12 @@ func callOneEcho(client pb.EchoClient, myName string, yourName string, message s
 	}
 
 	var resp *pb.Message
-	resp, err = client.OneEcho(ctx, msg)
+	var header, trailer metadata.MD
+	resp, err = client.OneEcho(ctx, msg, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
 		return err
 	}
+	logSessionInfo(header, trailer)
 	fmt.Printf("receive echo: %s\n", resp.String())
 
 	return nil
@@ -223,6 +239,8 @@ func callMultiEcho(
 ) error {
 
 	var err error
+
+	fmt.Println("[DEBUG] call proto.Echo/MultiEcho")
 
 	expectedDuration := (time.Duration)(delayInSec * (repeats - 1))
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second+expectedDuration)
@@ -243,6 +261,13 @@ func callMultiEcho(
 	if err != nil {
 		return err
 	}
+	var header, trailer metadata.MD
+	header, err = stream.Header()
+	if err != nil {
+		return err
+	}
+	trailer = stream.Trailer()
+	logSessionInfo(header, trailer)
 
 	var msg *pb.Message
 	for {
@@ -269,6 +294,8 @@ func callAdd(client pb.CalculatorClient, operands []int32) error {
 
 	var err error
 
+	fmt.Println("[DEBUG] call proto.Calculator/Add")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -278,6 +305,13 @@ func callAdd(client pb.CalculatorClient, operands []int32) error {
 		fmt.Printf("failed to open session for Add: %#v\n", err)
 		return err
 	}
+	var header, trailer metadata.MD
+	header, err = addClient.Header()
+	if err != nil {
+		return err
+	}
+	trailer = addClient.Trailer()
+	logSessionInfo(header, trailer)
 
 	for _, operand := range operands {
 		val := &pb.Value{
@@ -307,6 +341,8 @@ func callAddInteractive(client pb.CalculatorClient, operands []int32) error {
 
 	var err error
 
+	fmt.Println("[DEBUG] call proto.Calculator/AddInteractive")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
@@ -316,6 +352,13 @@ func callAddInteractive(client pb.CalculatorClient, operands []int32) error {
 		fmt.Printf("failed to open session for Add: %#v\n", err)
 		return err
 	}
+	var header, trailer metadata.MD
+	header, err = addClient.Header()
+	if err != nil {
+		return err
+	}
+	trailer = addClient.Trailer()
+	logSessionInfo(header, trailer)
 
 	var lastResult int32 = 0
 	for _, operand := range operands {
