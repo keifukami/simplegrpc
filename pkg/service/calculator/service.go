@@ -3,7 +3,9 @@ package calculator
 import (
 	"fmt"
 	pb "github.com/keifukami/simplegrpc/proto"
+	"google.golang.org/grpc/metadata"
 	"io"
+	"strings"
 )
 
 func NewCalculatorServer() pb.CalculatorServer {
@@ -17,6 +19,10 @@ type calculatorServer struct {
 func (cs *calculatorServer) Add(stream pb.Calculator_AddServer) error {
 
 	var err error
+
+	var headers metadata.MD
+	headers, _ = metadata.FromOutgoingContext(stream.Context())
+	logSessionInfo("proto.Calculator/Add", headers)
 
 	var sum int32 = 0
 	var operand *pb.Value
@@ -50,6 +56,10 @@ func (cs *calculatorServer) AddInteractive(stream pb.Calculator_AddInteractiveSe
 
 	var err error
 
+	var headers metadata.MD
+	headers, _ = metadata.FromOutgoingContext(stream.Context())
+	logSessionInfo("proto.Calculator/AddInteractive", headers)
+
 	var sum int32 = 0
 	var operand *pb.Value
 
@@ -76,4 +86,12 @@ func (cs *calculatorServer) AddInteractive(stream pb.Calculator_AddInteractiveSe
 
 	}
 
+}
+
+func logSessionInfo(rpcName string, md metadata.MD) {
+	fmt.Printf("[DEBUG] %s called\n", rpcName)
+
+	for name, values := range md {
+		fmt.Printf("[DEBUG]   header name: %s, values: %s.\n", name, strings.Join(values, "; "))
+	}
 }
