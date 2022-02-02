@@ -266,8 +266,6 @@ func callMultiEcho(
 	if err != nil {
 		return err
 	}
-	trailer = stream.Trailer()
-	logSessionInfo(header, trailer)
 
 	var msg *pb.Message
 	for {
@@ -275,6 +273,8 @@ func callMultiEcho(
 		msg, err = stream.Recv()
 
 		if err == io.EOF {
+			trailer = stream.Trailer()
+			logSessionInfo(header, trailer)
 			fmt.Println("echo stream closed")
 			return nil
 		}
@@ -305,13 +305,6 @@ func callAdd(client pb.CalculatorClient, operands []int32) error {
 		fmt.Printf("failed to open session for Add: %#v\n", err)
 		return err
 	}
-	var header, trailer metadata.MD
-	header, err = addClient.Header()
-	if err != nil {
-		return err
-	}
-	trailer = addClient.Trailer()
-	logSessionInfo(header, trailer)
 
 	for _, operand := range operands {
 		val := &pb.Value{
@@ -330,6 +323,14 @@ func callAdd(client pb.CalculatorClient, operands []int32) error {
 		fmt.Printf("failed to receive result: %#v\n", err)
 		return err
 	}
+
+	var header, trailer metadata.MD
+	header, err = addClient.Header()
+	if err != nil {
+		return err
+	}
+	trailer = addClient.Trailer()
+	logSessionInfo(header, trailer)
 
 	fmt.Printf("get sum: %d\n", sumValue.Number)
 
@@ -352,13 +353,6 @@ func callAddInteractive(client pb.CalculatorClient, operands []int32) error {
 		fmt.Printf("failed to open session for Add: %#v\n", err)
 		return err
 	}
-	var header, trailer metadata.MD
-	header, err = addClient.Header()
-	if err != nil {
-		return err
-	}
-	trailer = addClient.Trailer()
-	logSessionInfo(header, trailer)
 
 	var lastResult int32 = 0
 	for _, operand := range operands {
@@ -386,6 +380,14 @@ func callAddInteractive(client pb.CalculatorClient, operands []int32) error {
 		fmt.Printf("failed to receive result: %#v\n", err)
 		return err
 	}
+
+	var header, trailer metadata.MD
+	header, err = addClient.Header()
+	if err != nil {
+		return err
+	}
+	trailer = addClient.Trailer()
+	logSessionInfo(header, trailer)
 
 	fmt.Printf("get sum: %d\n", lastResult)
 
